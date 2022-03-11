@@ -10,9 +10,11 @@ import java.sql.Statement;
 import ro.ase.acs.contracts.DatabaseOperation;
 import ro.ase.acs.contracts.DatabaseParser;
 
-public class SQL implements DatabaseParser<Connection>, DatabaseOperation{
+public class SQL implements DatabaseParser, DatabaseOperation{
 	
-	private Connection connection;
+	private static Connection connection;
+	private static String tableName;
+	private static String firstField, secondField, thirdField;
 
 	@Override
 	public void openConnection() {
@@ -30,17 +32,16 @@ public class SQL implements DatabaseParser<Connection>, DatabaseOperation{
 	}
 	
 	@Override
-	public void createTable(Connection tableName) {
+	public void createTable(String tableName) {
 		
-		String sqlDrop = "DROP TABLE IF EXISTS employees";
-		String sqlCreate = "CREATE TABLE employees(id INTEGER PRIMARY KEY,"
-				+ "name TEXT, address TEXT, salary REAL)";
+		this.tableName = tableName;
+		
+		String sqlDrop = "DROP TABLE IF EXISTS " + tableName;
 		
 		Statement statement;
 		try {
 			statement = connection.createStatement();
 			statement.executeUpdate(sqlDrop);
-			statement.executeUpdate(sqlCreate);
 			statement.close();
 			connection.commit();
 		} catch (SQLException e) {
@@ -53,26 +54,33 @@ public class SQL implements DatabaseParser<Connection>, DatabaseOperation{
 	public void insert(String firstField, String secondField, String thirdField, String firstValue, String secondValue,
 			String thirdValue) {
 		
-		String sqlInsert = "INSERT INTO employees VALUES(1, " + firstValue + ", "+ secondValue + ", " + thirdValue + ")";
+		this.firstField = firstField;
+		this.secondField = secondField;
+		this.thirdField = thirdField;
+		
+		String sqlCreate = "CREATE TABLE " + tableName + "(id INTEGER PRIMARY KEY,"
+				+ firstField + " TEXT, " + secondField + " TEXT, " + thirdField + " TEXT)";
+		
+		String sqlInsert = "INSERT INTO " + tableName + " VALUES(1, '" + firstValue + "', '"+ secondValue + "', '" + thirdValue + "')";
 		Statement statement;
 		try {
 			statement = connection.createStatement();
+			statement.executeUpdate(sqlCreate);
 			statement.executeUpdate(sqlInsert);
 			statement.close();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		
-		String sqlInsertWithParams = "INSERT INTO employees VALUES (?,?,?,?)";
+		String sqlInsertWithParams = "INSERT INTO " + tableName + " VALUES (?,?,?,?)";
 		PreparedStatement preparedStatement;
 		try {
 			preparedStatement = connection.prepareStatement(sqlInsertWithParams);
 			preparedStatement.setInt(1, 2);
 			preparedStatement.setString(2, firstValue);
 			preparedStatement.setString(3, secondValue);
-			preparedStatement.setDouble(4, Double.valueOf(thirdValue));
+			preparedStatement.setString(4, thirdValue);
 			preparedStatement.executeUpdate();
 			preparedStatement.close();
 			
@@ -86,7 +94,7 @@ public class SQL implements DatabaseParser<Connection>, DatabaseOperation{
 	@Override
 	public void select() {
 		
-		String sqlSelect = "SELECT * FROM employees";
+		String sqlSelect = "SELECT * FROM " + tableName;
 		Statement statement;
 		try {
 			statement = connection.createStatement();
@@ -94,12 +102,12 @@ public class SQL implements DatabaseParser<Connection>, DatabaseOperation{
 			while(rs.next()) {
 				int id = rs.getInt("id");
 				System.out.println("id: " + id);
-				String name = rs.getString(2);
-				System.out.println("name: " + name);
-				String address = rs.getString("address");
-				System.out.println("address: " + address);
-				double salary = rs.getDouble("salary");
-				System.out.println("salary: " + salary);
+				String first = rs.getString(2);
+				System.out.println(firstField + ": " + first);
+				String second = rs.getString(3);
+				System.out.println(secondField + ": " + second);
+				String third = rs.getString(4);
+				System.out.println(thirdField + ": " + third);
 			}
 			rs.close();
 			statement.close();

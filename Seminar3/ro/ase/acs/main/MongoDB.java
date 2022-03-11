@@ -10,12 +10,12 @@ import com.mongodb.client.MongoDatabase;
 import ro.ase.acs.contracts.DatabaseOperation;
 import ro.ase.acs.contracts.DatabaseParser;
 
-public class MongoDB implements DatabaseParser<String>, DatabaseOperation{
+public class MongoDB implements DatabaseParser, DatabaseOperation{
 	
-	private MongoClient mongoClient;
-	private MongoDatabase mongoDb;
-	private String tableName;
-	private MongoCollection<Document> collection;
+	private static MongoClient mongoClient;
+	private static MongoDatabase mongoDb;
+	private static String tableName;
+	private static MongoCollection<Document> collection;
 
 	@Override
 	public void openConnection() {
